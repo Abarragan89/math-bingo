@@ -2,6 +2,8 @@
 
 import { useEffect } from "react";
 
+import { withBasePath } from "@/lib/base-path";
+
 /**
  * Registers the service worker that makes the game installable and playable
  * offline. Production only: in dev the build assets change on every edit, and
@@ -14,7 +16,9 @@ export function PwaRegister() {
 
     const register = () => {
       // Failure here only costs offline support, so it stays quiet.
-      void navigator.serviceWorker.register("/sw.js").catch(() => {});
+      // Scope defaults to the worker's own directory, which under a base path
+      // is exactly the sub-path the site occupies.
+      void navigator.serviceWorker.register(withBasePath("/sw.js")).catch(() => {});
     };
 
     // Wait for load so registration never competes with the first paint.

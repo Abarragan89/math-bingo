@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { MAX_NUMBER, MIN_NUMBER, TOTAL_COMBINATIONS } from "@/lib/bingo";
+import { withBasePath } from "@/lib/base-path";
+import { MAX_NUMBER, MIN_NUMBER } from "@/lib/bingo";
 
 export default function Home() {
   return (
@@ -15,8 +16,7 @@ export default function Home() {
         </h1>
         <p className="mx-auto max-w-sm text-base text-cream/60">
           Spin two reels, call the multiplication, and let the room hunt for the
-          product on their cards. {TOTAL_COMBINATIONS} combinations, never the
-          same one twice.
+          product on their <a className="text-blue-500 underline" href={withBasePath("/bingo-card.pdf")} download>Bingo cards</a>.
         </p>
       </div>
 

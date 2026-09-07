@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { buildDeck, TOTAL_COMBINATIONS, type Pair } from "@/lib/bingo";
+import {
+  clearGameState,
+  loadGameState,
+  saveGameState,
+} from "@/lib/game-storage";
 import { TOTAL_SPIN_MS } from "@/lib/timing";
 
 type UseBingoGameOptions = {
@@ -25,19 +30,21 @@ export function useBingoGame({
   const [spinToken, setSpinToken] = useState(0);
   /** Gap between automated spins, or null when automation is off. */
   const [autoDelayMs, setAutoDelayMs] = useState<number | null>(null);
+  /** True until the saved game has been read back from IndexedDB. */
+  const [isRestoring, setIsRestoring] = useState(true);
 
   const commitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Synchronous guard: state updates are batched, this is not. */
   const spinningRef = useRef(false);
 
   const isExhausted = deck.length === 0;
-  const canSpin = !isSpinning && !isExhausted;
+  const canSpin = !isSpinning && !isExhausted && !isRestoring;
   // Derived rather than cleared in an effect, so running out of combinations
   // flips the UI back without a second render pass.
   const isAuto = autoDelayMs !== null && !isExhausted;
 
   const spin = useCallback(() => {
-    if (spinningRef.current || deck.length === 0) return;
+    if (spinningRef.current || isRestoring || deck.length === 0) return;
 
     const pair = deck[deck.length - 1];
     spinningRef.current = true;
@@ -55,13 +62,47 @@ export function useBingoGame({
       setIsSpinning(false);
       commitTimer.current = null;
     }, TOTAL_SPIN_MS);
-  }, [deck, onSpinStart]);
+  }, [deck, isRestoring, onSpinStart]);
 
   useEffect(() => {
     return () => {
       if (commitTimer.current) clearTimeout(commitTimer.current);
     };
   }, []);
+
+  // Read the saved game once, before anything can be spun.
+  useEffect(() => {
+    let cancelled = false;
+    void loadGameState()
+      // Storage failing costs persistence, never playability: the game must
+      // come out of its loading state no matter what happened here.
+      .catch(() => null)
+      .then((saved) => {
+        if (cancelled) return;
+        if (saved && saved.drawn.length > 0) {
+          setDrawn(saved.drawn);
+          setDeck(saved.deck);
+          // Park the reels on the last call rather than replaying its spin.
+          setCurrent(saved.drawn[saved.drawn.length - 1]);
+        }
+        setIsRestoring(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Persist the calls as they land. The deck is rebuilt from them on load, so
+  // saving on commit alone keeps the record internally consistent — a refresh
+  // mid-spin simply returns the in-flight combination to the deck.
+  useEffect(() => {
+    if (isRestoring) return;
+    if (drawn.length === 0) {
+      void clearGameState();
+      return;
+    }
+    void saveGameState(drawn);
+  }, [drawn, isRestoring]);
 
   // Non-reactive: lets the scheduler below reach the latest spin without
   // tearing down and rebuilding its timer every time the deck changes.
@@ -91,6 +132,7 @@ export function useBingoGame({
   const stopAuto = useCallback(() => setAutoDelayMs(null), []);
 
   const reset = useCallback(() => {
+    void clearGameState();
     if (commitTimer.current) clearTimeout(commitTimer.current);
     commitTimer.current = null;
     spinningRef.current = false;
@@ -105,6 +147,7 @@ export function useBingoGame({
   return {
     drawn,
     current,
+    isRestoring,
     spinToken,
     isSpinning,
     canSpin,

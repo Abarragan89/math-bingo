@@ -5,20 +5,30 @@
  * classroom where the wifi comes and goes mid-lesson.
  */
 
-const VERSION = "math-bingo-v2";
+const VERSION = "math-bingo-v3";
 const SHELL_CACHE = `${VERSION}-shell`;
 const ASSET_CACHE = `${VERSION}-assets`;
 
-// Everything needed to open the game cold with no network.
+/**
+ * The sub-path the site is served under, with a trailing slash. Files in
+ * `public/` are copied out verbatim, so this one cannot import the app's
+ * `BASE_PATH` — but the worker is served from the site root it belongs to, so
+ * its own directory is that base path. Under GitHub Pages that resolves to
+ * "/math-bingo/", and when served from a domain root, to "/".
+ */
+const BASE = new URL("./", self.location).pathname;
+
+// Everything needed to open the game cold with no network. `trailingSlash` is
+// on, so the game route is a directory.
 const SHELL = [
-  "/",
-  "/game",
-  "/manifest.webmanifest",
-  "/sounds/number-spin.wav",
-  "/sounds/bingo-winner.wav",
-  "/icon-192.png",
-  "/icon-512.png",
-  "/icon-maskable-512.png",
+  BASE,
+  `${BASE}game/`,
+  `${BASE}manifest.webmanifest`,
+  `${BASE}sounds/number-spin.wav`,
+  `${BASE}sounds/bingo-winner.wav`,
+  `${BASE}icon-192.png`,
+  `${BASE}icon-512.png`,
+  `${BASE}icon-maskable-512.png`,
 ];
 
 self.addEventListener("install", (event) => {
@@ -49,8 +59,8 @@ self.addEventListener("activate", (event) => {
 /** Hashed build output and media: the URL changes when the content does. */
 function isImmutable(url) {
   return (
-    url.pathname.startsWith("/_next/static/") ||
-    url.pathname.startsWith("/sounds/") ||
+    url.pathname.startsWith(`${BASE}_next/static/`) ||
+    url.pathname.startsWith(`${BASE}sounds/`) ||
     /\.(png|svg|ico|woff2?)$/.test(url.pathname)
   );
 }
@@ -110,7 +120,7 @@ async function networkFirst(request) {
     if (response.ok) cache.put(request, response.clone());
     return response;
   } catch (error) {
-    const hit = (await cache.match(request)) || (await cache.match("/game"));
+    const hit = (await cache.match(request)) || (await cache.match(`${BASE}game/`));
     if (hit) return hit;
     throw error;
   }

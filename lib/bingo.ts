@@ -34,11 +34,12 @@ export function allPairs(): Pair[] {
 export const TOTAL_COMBINATIONS = allPairs().length;
 
 /**
- * A shuffled deck of every combination. Drawing pops off the end, so a game can
- * never repeat a combination and never has to re-roll to find an unused one.
+ * Shuffles combinations into a draw order. Drawing pops off the end, so a game
+ * can never repeat a combination and never has to re-roll to find an unused
+ * one. Takes any subset, so a restored game can rebuild its remaining deck.
  */
-export function buildDeck(): Pair[] {
-  const deck = allPairs();
+export function shuffleDeck(pairs: Pair[]): Pair[] {
+  const deck = [...pairs];
   for (let i = deck.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -46,6 +47,11 @@ export function buildDeck(): Pair[] {
   // The combination is spent either way, so flipping how it reads keeps the
   // reels from always showing the smaller number on the left.
   return deck.map(({ a, b }) => (Math.random() < 0.5 ? { a, b } : { a: b, b: a }));
+}
+
+/** A shuffled deck of every combination — a brand new game. */
+export function buildDeck(): Pair[] {
+  return shuffleDeck(allPairs());
 }
 
 export type ParsedProducts = {

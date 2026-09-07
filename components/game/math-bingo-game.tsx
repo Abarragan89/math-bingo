@@ -134,7 +134,7 @@ export function MathBingoGame() {
             ) : (
               <>
                 <BotIcon />
-                Automate spin
+                Auto spin
               </>
             )}
           </Button>
@@ -157,6 +157,7 @@ export function MathBingoGame() {
         drawn={game.drawn}
         total={game.totalCombinations}
         highlighted={winningKeys}
+        isRestoring={game.isRestoring}
       />
 
       {/* Status line */}

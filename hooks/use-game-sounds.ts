@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { withBasePath } from "@/lib/base-path";
+
 const SOUNDS = {
-  spin: "/sounds/number-spin.wav",
-  win: "/sounds/bingo-winner.wav",
+  spin: withBasePath("/sounds/number-spin.wav"),
+  win: withBasePath("/sounds/bingo-winner.wav"),
 } as const;
 
 type SoundName = keyof typeof SOUNDS;

@@ -11,9 +11,16 @@ type DrawHistoryProps = {
   total: number;
   /** Keys of calls that satisfied a verified BINGO, flashed for the room. */
   highlighted?: Set<string>;
+  /** While the saved game is being read back, so the board stays neutral. */
+  isRestoring?: boolean;
 };
 
-export function DrawHistory({ drawn, total, highlighted }: DrawHistoryProps) {
+export function DrawHistory({
+  drawn,
+  total,
+  highlighted,
+  isRestoring = false,
+}: DrawHistoryProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Keep the newest call in view as the board fills up.
@@ -37,7 +44,11 @@ export function DrawHistory({ drawn, total, highlighted }: DrawHistoryProps) {
         ref={scrollRef}
         className="rail-gold h-48 overflow-y-auto rounded-2xl p-3 shadow-[inset_0_4px_16px_-4px_rgba(0,0,0,0.7)] sm:h-56"
       >
-        {drawn.length === 0 ? (
+        {isRestoring ? (
+          <p className="flex h-full items-center justify-center text-center text-sm text-cream/30">
+            Loading your game…
+          </p>
+        ) : drawn.length === 0 ? (
           <p className="flex h-full items-center justify-center text-center text-sm text-cream/40">
             No numbers called yet — press Spin to start the game.
           </p>

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { PwaRegister } from "@/components/pwa-register";
+import { withBasePath } from "@/lib/base-path";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -28,7 +29,12 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
   },
   icons: {
-    apple: "/apple-icon.png",
+    // Setting `icons` at all suppresses the `app/favicon.ico` file convention,
+    // so the tab icon has to be named explicitly. Both are hand-written URLs,
+    // which are passed through as-is — only icons Next discovers as files in
+    // `app/` get the base path applied for us.
+    icon: withBasePath("/favicon.ico"),
+    apple: withBasePath("/apple-icon.png"),
   },
   formatDetection: { telephone: false },
 };
